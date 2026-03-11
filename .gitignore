@@ -1,0 +1,6 @@
+# ignore nameless executables
+*
+!*.*
+!*/
+
+.o

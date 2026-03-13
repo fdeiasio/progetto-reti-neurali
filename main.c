@@ -12,14 +12,14 @@
 
 #define GROUND_HEIGHT   200
 
-#define LANDER_HEIGHT   150
+#define LANDER_HEIGHT   100
 #define LANDER_WIDTH    LANDER_HEIGHT
 #define LANDER_MASS     500
 #define LANDER_POS_X    300
 #define LANDER_POS_Y    300
-#define LANDER_POS_Z    70
+#define LANDER_POS_Z    0
 
-#define g 9.81f
+#define gravity 500
 
 // ======================== LUNAR LANDER ===============================
 
@@ -34,14 +34,14 @@ struct LunarLander
 
 static struct LunarLander lunarLander = 
 {
-    .mass       = LANDER_MASS,
-    .position   = 
+    .mass     = LANDER_MASS,
+    .position = 
     { 
         .x = LANDER_POS_X, 
         .y = LANDER_POS_Y, 
         .z = LANDER_POS_Z, 
     },
-    .velocity   = { 0, 0, 0 },
+    .velocity = { 0, 0, 0 },
 };
 
 static inline Rectangle LanderHitbox(struct LunarLander* const lunarLander)
@@ -71,10 +71,13 @@ void DrawLander(struct LunarLander* const lunarLander, Texture2D sprite)
     DrawTexturePro (sprite, src, dst, origin, rot, WHITE);
 }
 
-void UpdateLanderPosition(struct LunarLander* lunarLander, Vector3 force, float dt) 
+void UpdateLanderPosition(struct LunarLander* lunarLander, Vector3 acceleration, float dt) 
 {
-    Vector3Add(lunarLander->velocity, Vector3Scale(force, dt));
-    Vector3Add(lunarLander->position, Vector3Scale(lunarLander->velocity, dt));
+    lunarLander->velocity 
+        = Vector3Add(lunarLander->velocity, Vector3Scale(acceleration, dt));
+
+    lunarLander->position 
+        = Vector3Add(lunarLander->position, Vector3Scale(lunarLander->velocity, dt));
 }
 
 // =================================== MISC =====================================
@@ -114,13 +117,14 @@ int main(void)
     {
         float dt = GetFrameTime();
 
+        Vector3 acceleration = { 0, 0, 0 };
+        acceleration.y += gravity;
+
+        UpdateLanderPosition(&lunarLander, acceleration, dt);
+
         BeginDrawing();
-        DrawBackground(background);
-
-        printf("%d\n", CheckCollisionRecs(ground, LanderHitbox(&lunarLander)));
-
-        DrawLander(&lunarLander, sprite);
-
+            DrawBackground(background);
+            DrawLander(&lunarLander, sprite);
         EndDrawing();
     }
 

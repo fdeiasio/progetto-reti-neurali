@@ -65,6 +65,19 @@ static inline Rectangle LanderHitbox(struct LunarLander* const lunarLander) {
     };
 }
 
+void ResetLander(struct LunarLander* lunarLander) {
+    *lunarLander = (struct LunarLander) {
+        .position = { 
+            .x = LANDER_POS_X, 
+            .y = LANDER_POS_Y, 
+            .z = LANDER_POS_Z, 
+        },
+        .velocity = { 0, 0, 0 },
+        .fuel     = STARTING_FUEL,
+        .status   = IDLE,
+    };
+}
+
 void DrawLander(struct LunarLander* const lunarLander, Texture2D sprite) {   
     Rectangle src = { 0, 0, sprite.width, sprite.height };
     Rectangle dst = {
@@ -136,6 +149,8 @@ void DrawBackground(Texture2D background){
 
 // =========================== MAIN ==================================
 
+char buffer[1024];
+
 int main(void) {  
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
 
@@ -146,12 +161,14 @@ int main(void) {
     Texture2D sprite_1 = LoadTexture("media/sprite_1.png");
     Texture2D sprite_2 = LoadTexture("media/sprite_2.png");
     Texture2D sprite_3 = LoadTexture("media/sprite_3.png");
-    
+
+    Font font = LoadFontEx("media/font.ttf", 32, 0, 250);
+
     for (long frame = 0; !WindowShouldClose(); frame++) {
         float dt = GetFrameTime();
-
-        UpdateLanderPosition(&lunarLander, dt);
         
+        UpdateLanderPosition(&lunarLander, dt);
+
         if (lunarLander.position.x < 0 ||
             lunarLander.position.x > WINDOW_WIDTH ||
             lunarLander.position.y < 0 ||
@@ -174,6 +191,9 @@ int main(void) {
         BeginDrawing();
         DrawBackground(background);
 
+        sprintf(buffer, "Fuel: %d", lunarLander.fuel);
+        DrawTextEx(font, buffer, (Vector2){0, 0}, 32, 0, WHITE);
+
         switch (lunarLander.status) {
             case (IDLE):
                 DrawLander(&lunarLander, sprite_0);
@@ -190,6 +210,18 @@ int main(void) {
             default:
                 break;
         }
+
+        if (lunarLander.status == CRASHED) {
+            DrawTextPro(
+                font, 
+                "Game\nOver", 
+                (Vector2){WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2},
+                64, 
+                0,
+                WHITE
+            );
+        }
+
 
         EndDrawing();
     }

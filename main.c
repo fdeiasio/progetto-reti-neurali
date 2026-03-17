@@ -20,6 +20,7 @@
 #define LANDER_POS_X    300
 #define LANDER_POS_Y    300
 #define LANDER_POS_Z    0
+#define STARTING_FUEL   1000
 
 #define gravity 120
 #define thrust  200
@@ -31,12 +32,15 @@ enum landerStatus  {
     IDLE,
     ACTIVE,
     CRASHED,
+    OOB,        // Out Of Bounds
+    OOF,        // Out Of Fuel
     STATES_NUM,
 };
  
 struct LunarLander {
     Vector3 position;
     Vector3 velocity;   // Here the z component represent angular velocity
+    int     fuel;
 
     enum landerStatus status;
 };
@@ -48,6 +52,7 @@ static struct LunarLander lunarLander = {
         .z = LANDER_POS_Z, 
     },
     .velocity = { 0, 0, 0 },
+    .fuel     = STARTING_FUEL,
     .status   = IDLE,
 };
 
@@ -75,7 +80,10 @@ void DrawLander(struct LunarLander* const lunarLander, Texture2D sprite) {
 }
 
 void UpdateLanderPosition(struct LunarLander* lunarLander, float dt) {
-    if (lunarLander->status == CRASHED) 
+    if (lunarLander->status == CRASHED || 
+        lunarLander->status == OOB  ||
+        lunarLander-> status == OOF
+    ) 
         return;
 
     Vector3 acceleration = { 0, 0, 0 };
@@ -89,6 +97,9 @@ void UpdateLanderPosition(struct LunarLander* lunarLander, float dt) {
 
     if (IsKeyDown(KEY_SPACE)) {
         lunarLander->status = ACTIVE;
+
+        lunarLander->fuel--;
+        printf("%d\n", lunarLander->fuel);
 
         acceleration.x += thrust * sinf(lunarLander->position.z * DEG2RAD);
         acceleration.y -= thrust * cosf(lunarLander->position.z * DEG2RAD);
@@ -140,12 +151,24 @@ int main(void) {
         float dt = GetFrameTime();
 
         UpdateLanderPosition(&lunarLander, dt);
+        
+        if (lunarLander.position.x < 0 ||
+            lunarLander.position.x > WINDOW_WIDTH ||
+            lunarLander.position.y < 0 ||
+            lunarLander.position.y > WINDOW_HEIGHT
+        ) {
+            lunarLander.status = OOB;
+        }
 
         if(CheckCollisionRecs(LanderHitbox(&lunarLander), ground)) {
             lunarLander.status = CRASHED;
             lunarLander.position.y = ground.y - LANDER_HEIGHT / 2;
             lunarLander.position.z = 0;
             lunarLander.velocity = (Vector3) { 0, 0, 0 };
+        }
+
+        if (lunarLander.fuel <= 0) {
+            lunarLander.status = OOF;
         }
 
         BeginDrawing();

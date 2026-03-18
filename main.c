@@ -19,14 +19,16 @@
 #define LANDER_INIT_Y   300
 #define LANDER_INIT_Z   0
 
-#define STARTING_FUEL   1000
+#define STARTING_FUEL   800
 
 #define GRAVITY         120
 #define THRUST          200
 #define TORQUE          1
 
-#define WIN_START       1145
-#define WIN_END         1165
+#define WIN_START       1140
+#define WIN_END         1285
+#define VEL_THRESHOLD   100
+#define ANGLE_THRESHOLD 15
 
 // ======================= INPUT HANDLING ======================
 
@@ -53,9 +55,12 @@ static InputMask GetInputMask(void) {
 typedef enum {
     IDLE,
     ACTIVE,
-    CRASHED,
+    TOO_FAST,
+    TOO_ANGLED,
+    TOO_FAR,
     OUT_OF_BOUNDS,
     OUT_OF_FUEL,
+    WON,
 } Status;
 
 typedef struct {
@@ -104,8 +109,16 @@ static void UpdatePosition(Lander* l, float dt, Vector3 acceleration) {
     l->position = Vector3Add(l->position, Vector3Scale(l->velocity, dt));
 }
 
+static bool IsGameOver(const Lander* l) {
+    return l->status == TOO_FAST      || 
+           l->status == TOO_ANGLED    || 
+           l->status == TOO_FAR       || 
+           l->status == OUT_OF_BOUNDS || 
+           l->status == OUT_OF_FUEL;
+}
+
 static void UpdateLander(Lander* l, float dt, InputMask input) {
-    if (l->status == CRASHED || l->status == OUT_OF_BOUNDS || l->status == OUT_OF_FUEL)
+    if (IsGameOver(l) || l->status == WON)
         return;
 
     Vector3 acceleration = {0, GRAVITY, 0};
@@ -156,7 +169,7 @@ static void DrawLanderSprite(const Lander* l, Texture2D sprites[] ,int frame) {
             ? SPRITE_THRUST_1 
             : SPRITE_THRUST_2;
     } 
-    else if (l->status == CRASHED) {
+    else if (l->status == TOO_ANGLED || l->status == TOO_FAR || l->status == TOO_FAST) {
         sprite_idx = SPRITE_CRASHED;
     } 
     else {
@@ -182,10 +195,6 @@ static void DrawBackground(Texture2D bg) {
     DrawTexturePro(bg, src, dst, (Vector2){0, 0}, 0.0f, WHITE);
 }
 
-static bool IsGameOver(const Lander* l) {
-    return l->status == CRASHED || l->status == OUT_OF_BOUNDS || l->status == OUT_OF_FUEL;
-}
-
 static void CheckBounds(Lander* l) {
     if (l->position.x < 0 || l->position.x > WINDOW_WIDTH ||
         l->position.y < 0 || l->position.y > WINDOW_HEIGHT) {
@@ -193,11 +202,26 @@ static void CheckBounds(Lander* l) {
     }
 }
 
+static bool IsInWinZone(float x) {
+    return x >= WIN_START && x <= WIN_END;
+}
+
 static void CheckCollision(Lander* l) {
     if (!CheckCollisionRecs(GetLanderHitbox(l), ground))
         return;
 
-    l->status = CRASHED;
+    float speed = Vector2Length((Vector2){l->velocity.x, l->velocity.y});
+    
+    if (IsInWinZone(l->position.x) && speed < VEL_THRESHOLD && fabsf(l->position.z) < ANGLE_THRESHOLD) {
+        l->status = WON;
+    } else if (speed >= VEL_THRESHOLD) {
+        l->status = TOO_FAST;
+    } else if (fabsf(l->position.z) >= ANGLE_THRESHOLD) {
+        l->status = TOO_ANGLED;
+    } else {
+        l->status = TOO_FAR;
+    }
+
     l->position.y = ground.y - LANDER_HEIGHT / 2;
     l->position.z = 0;
     l->velocity = (Vector3){0, 0, 0};
@@ -213,8 +237,12 @@ static const char* GetGameOverReason(const Lander* l) {
         return "The lander has been impacted by oil shortages";
     if (l->status == OUT_OF_BOUNDS)
         return "The lander had ambitions that exceeded its capabilities";
-    if (l->status == CRASHED)
-        return "The lander met the ground too fast";
+    if (l->status == TOO_FAST)
+        return "The lander met the ground too fast for its own good";
+    if (l->status == TOO_ANGLED)
+        return "The lander tried to land on its side, it failed";
+    if (l->status == TOO_FAR)
+        return "The lander should calibrate distance better";
     return "Unknown";
 }
 
@@ -234,6 +262,24 @@ static void DrawGameOverScreen(Font font, const Lander* l) {
         title_pos.y + title_size.y + 20,
     };
     DrawTextEx(font, reason, reason_pos, 32, 0, WHITE);
+}
+
+static void DrawWinScreen(Font font) {
+    const char* title = "Success!";
+    Vector2 title_size = MeasureTextEx(font, title, 64, 0);
+    Vector2 title_pos = {
+        WINDOW_WIDTH / 2 - title_size.x / 2,
+        WINDOW_HEIGHT / 2 - title_size.y / 2 - 100,
+    };
+    DrawTextEx(font, title, title_pos, 64, 0, WHITE);
+
+    const char* subtitle = "You landed safely!";
+    Vector2 subtitle_size = MeasureTextEx(font, subtitle, 32, 0);
+    Vector2 subtitle_pos = {
+        WINDOW_WIDTH / 2 - subtitle_size.x / 2,
+        title_pos.y + title_size.y + 20,
+    };
+    DrawTextEx(font, subtitle, subtitle_pos, 32, 0, WHITE);
 }
 
 static void DrawFuelDisplay(Font font, int fuel) {
@@ -264,14 +310,19 @@ int main(void) {
         float dt = GetFrameTime();
         InputMask input = GetInputMask();
 
-        // Reset on game over
-        if (IsGameOver(&lander) && IsKeyPressed(KEY_SPACE)) {
+        // Reset on game over or win
+        if ((IsGameOver(&lander) || lander.status == WON) && IsKeyPressed(KEY_SPACE)) {
             ResetLander(&lander);
             input = 0;
         }
 
         // Update game state
         UpdateLander(&lander, dt, input);
+
+        printf("Position: (%.2f, %.2f) Velocity: (%.2f, %.2f) Fuel: %d Status: %d\n", 
+            lander.position.x, lander.position.y, 
+            lander.velocity.x, lander.velocity.y, 
+            lander.fuel, lander.status);
 
         CheckBounds(&lander);
         CheckCollision(&lander);
@@ -283,8 +334,11 @@ int main(void) {
             DrawFuelDisplay(font, lander.fuel);
             DrawLanderSprite(&lander, sprites, frame);
 
-            if (IsGameOver(&lander))
+            if (IsGameOver(&lander)) {
                 DrawGameOverScreen(font, &lander);
+            } else if (lander.status == WON) {
+                DrawWinScreen(font);
+            }
         EndDrawing();
     }
 

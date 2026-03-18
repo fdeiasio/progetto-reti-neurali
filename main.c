@@ -25,24 +25,27 @@
 #define THRUST          200
 #define TORQUE          1
 
-// ======================= SPRITE INDICES =======================
-
-typedef enum {
-    SPRITE_IDLE = 0,
-    SPRITE_THRUST_1 = 1,
-    SPRITE_THRUST_2 = 2,
-    SPRITE_CRASHED = 3,
-    SPRITE_COUNT = 4,
-} SpriteIndex;
-
-// ======================= INPUT BIT MASK =======================
+// ======================= INPUT HANDLING ======================
 
 typedef unsigned char InputMask;
 #define INPUT_LEFT      (1 << 0)
 #define INPUT_RIGHT     (1 << 1)
 #define INPUT_THRUST    (1 << 2)
 
-// ======================== LANDER STATE =======================
+static InputMask GetInputMask(void) {
+    InputMask input = 0;
+
+    if (IsKeyDown(KEY_LEFT))
+        input |= INPUT_LEFT;
+    if (IsKeyDown(KEY_RIGHT))
+        input |= INPUT_RIGHT;
+    if (IsKeyDown(KEY_SPACE))
+        input |= INPUT_THRUST;
+
+    return input;
+}
+
+// ======================== LANDER ==========================
 
 typedef enum {
     IDLE,
@@ -59,25 +62,12 @@ typedef struct {
     Status  status;
 } Lander;
 
-// ====================== GLOBAL STATE ======================
-
 static Lander lander = {
     .position = {LANDER_INIT_X, LANDER_INIT_Y, LANDER_INIT_Z},
     .velocity = {0, 0, 0},
     .fuel = STARTING_FUEL,
     .status = IDLE,
 };
-
-static Rectangle ground = {
-    .x = 0,
-    .y = WINDOW_HEIGHT - GROUND_HEIGHT,
-    .width = WINDOW_WIDTH,
-    .height = GROUND_HEIGHT,
-};
-
-static Texture2D sprites[SPRITE_COUNT];
-
-// ===================== LANDER OPERATIONS ====================
 
 static inline Rectangle GetLanderHitbox(const Lander* l) {
     return (Rectangle) {
@@ -96,36 +86,6 @@ static void ResetLander(Lander* l) {
         .status = IDLE,
     };
 }
-
-static void DrawLander(const Lander* l, Texture2D sprite) {
-    Rectangle src = {0, 0, sprite.width, sprite.height};
-    Rectangle dst = {
-        .x = l->position.x,
-        .y = l->position.y,
-        .width = LANDER_WIDTH,
-        .height = LANDER_HEIGHT,
-    };
-    Vector2 origin = {LANDER_WIDTH / 2, LANDER_HEIGHT / 2};
-
-    DrawTexturePro(sprite, src, dst, origin, l->position.z, WHITE);
-}
-
-// ======================= INPUT HANDLING ======================
-
-static InputMask GetInputMask(void) {
-    InputMask input = 0;
-
-    if (IsKeyDown(KEY_LEFT))
-        input |= INPUT_LEFT;
-    if (IsKeyDown(KEY_RIGHT))
-        input |= INPUT_RIGHT;
-    if (IsKeyDown(KEY_SPACE))
-        input |= INPUT_THRUST;
-
-    return input;
-}
-
-// ====================== PHYSICS UPDATE ======================
 
 static void ApplyThrust(Lander* l, Vector3* acceleration) {
     l->status = ACTIVE;
@@ -159,7 +119,58 @@ static void UpdateLander(Lander* l, float dt, InputMask input) {
     UpdatePosition(l, dt, acceleration);
 }
 
-// ====================== RENDERING ========================
+// ====================== SPRITING ========================
+
+typedef enum {
+    SPRITE_IDLE = 0,
+    SPRITE_THRUST_1 = 1,
+    SPRITE_THRUST_2 = 2,
+    SPRITE_CRASHED = 3,
+    SPRITE_COUNT = 4,
+} SpriteIndex;
+
+static void DrawLander(const Lander* l, Texture2D sprite) {
+    Rectangle src = {0, 0, sprite.width, sprite.height};
+    Rectangle dst = {
+        .x = l->position.x,
+        .y = l->position.y,
+        .width = LANDER_WIDTH,
+        .height = LANDER_HEIGHT,
+    };
+    Vector2 origin = {LANDER_WIDTH / 2, LANDER_HEIGHT / 2};
+
+    DrawTexturePro(sprite, src, dst, origin, l->position.z, WHITE);
+}
+
+static void DrawLanderSprite(const Lander* l, Texture2D sprites[] ,int frame) {
+    int sprite_idx;
+
+    if (l->status == IDLE) {
+        sprite_idx = SPRITE_IDLE;
+    } 
+    else if (l->status == ACTIVE) {
+        sprite_idx = (frame & (1 << 3)) 
+            ? SPRITE_THRUST_1 
+            : SPRITE_THRUST_2;
+    } 
+    else if (l->status == CRASHED) {
+        sprite_idx = SPRITE_CRASHED;
+    } 
+    else {
+        sprite_idx = SPRITE_IDLE;
+    }
+
+    DrawLander(l, sprites[sprite_idx]);
+}
+
+// ====================== ENVIRONMENT ======================
+
+static Rectangle ground = {
+    .x = 0,
+    .y = WINDOW_HEIGHT - GROUND_HEIGHT,
+    .width = WINDOW_WIDTH,
+    .height = GROUND_HEIGHT,
+};
 
 static void DrawBackground(Texture2D bg) {
     Rectangle src = {0, 0, bg.width, bg.height};
@@ -194,31 +205,32 @@ static void CheckFuel(Lander* l) {
         l->status = OUT_OF_FUEL;
 }
 
-static void DrawGameOverScreen(Font font) {
-    const char* text = "Game\nOver";
-    Vector2 size = MeasureTextEx(font, text, 64, 0);
-    Vector2 pos = {
-        WINDOW_WIDTH / 2 - size.x / 2,
-        WINDOW_HEIGHT / 2 - size.y / 2 - 100,
-    };
-
-    DrawTextEx(font, text, pos, 64, 0, WHITE);
+static const char* GetGameOverReason(const Lander* l) {
+    if (l->status == OUT_OF_FUEL)
+        return "The lander has been impacted by oil shortages";
+    if (l->status == OUT_OF_BOUNDS)
+        return "The lander had ambitions that exceeded its capabilities";
+    if (l->status == CRASHED)
+        return "The lander met the ground too fast";
+    return "Unknown";
 }
 
-static void DrawLanderSprite(const Lander* l, int frame) {
-    int sprite_idx;
+static void DrawGameOverScreen(Font font, const Lander* l) {
+    const char* title = "Game\nOver";
+    Vector2 title_size = MeasureTextEx(font, title, 64, 0);
+    Vector2 title_pos = {
+        WINDOW_WIDTH / 2 - title_size.x / 2,
+        WINDOW_HEIGHT / 2 - title_size.y / 2 - 100,
+    };
+    DrawTextEx(font, title, title_pos, 64, 0, WHITE);
 
-    if (l->status == IDLE) {
-        sprite_idx = SPRITE_IDLE;
-    } else if (l->status == ACTIVE) {
-        sprite_idx = (frame & (1 << 3)) ? SPRITE_THRUST_1 : SPRITE_THRUST_2;
-    } else if (l->status == CRASHED) {
-        sprite_idx = SPRITE_CRASHED;
-    } else {
-        sprite_idx = SPRITE_IDLE;
-    }
-
-    DrawLander(l, sprites[sprite_idx]);
+    const char* reason = GetGameOverReason(l);
+    Vector2 reason_size = MeasureTextEx(font, reason, 32, 0);
+    Vector2 reason_pos = {
+        WINDOW_WIDTH / 2 - reason_size.x / 2,
+        title_pos.y + title_size.y + 20,
+    };
+    DrawTextEx(font, reason, reason_pos, 32, 0, WHITE);
 }
 
 static void DrawFuelDisplay(Font font, int fuel) {
@@ -236,16 +248,11 @@ int main(void) {
     // Load assets
     Texture2D bg = LoadTexture("media/bg.jpg");
 
-    const char* sprite_paths[SPRITE_COUNT] = {
-        "media/sprite_0.png",  // SPRITE_IDLE
-        "media/sprite_1.png",  // SPRITE_THRUST_1
-        "media/sprite_2.png",  // SPRITE_THRUST_2
-        "media/sprite_3.png",  // SPRITE_CRASHED
-    };
-
-    for (int i = 0; i < SPRITE_COUNT; i++) {
-        sprites[i] = LoadTexture(sprite_paths[i]);
-    }
+    Texture2D sprites[SPRITE_COUNT];
+    sprites[SPRITE_IDLE]    = LoadTexture("media/sprite_0.png");
+    sprites[SPRITE_THRUST_1]= LoadTexture("media/sprite_1.png");
+    sprites[SPRITE_THRUST_2]= LoadTexture("media/sprite_2.png");
+    sprites[SPRITE_CRASHED] = LoadTexture("media/sprite_3.png");
 
     Font font = LoadFontEx("media/font.ttf", 32, 0, 250);
 
@@ -271,18 +278,19 @@ int main(void) {
         BeginDrawing();
             DrawBackground(bg);
             DrawFuelDisplay(font, lander.fuel);
-            DrawLanderSprite(&lander, frame);
+            DrawLanderSprite(&lander, sprites, frame);
 
             if (IsGameOver(&lander))
-                DrawGameOverScreen(font);
+                DrawGameOverScreen(font, &lander);
         EndDrawing();
     }
 
     // Cleanup
     UnloadTexture(bg);
-    for (int i = 0; i < SPRITE_COUNT; i++) {
-        UnloadTexture(sprites[i]);
-    }
+    UnloadTexture(sprites[SPRITE_IDLE]);
+    UnloadTexture(sprites[SPRITE_THRUST_1]);
+    UnloadTexture(sprites[SPRITE_THRUST_2]);
+    UnloadTexture(sprites[SPRITE_CRASHED]);
     UnloadFont(font);
     CloseWindow();
 

@@ -25,6 +25,9 @@
 #define THRUST          200
 #define TORQUE          1
 
+#define WIN_START       1145
+#define WIN_END         1165
+
 // ======================= INPUT HANDLING ======================
 
 typedef unsigned char InputMask;

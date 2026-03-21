@@ -1,17 +1,25 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Wpedantic -Werror
-INCLUDE = -I./include
-LIBS    = ./lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
-TARGET  = main
-SRC     = main.c
+INCLUDE = -I./inc -I./raylib/include
+LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
+BUILDDIR = build
+TARGET  = $(BUILDDIR)/main
+SRC     = $(wildcard src/*.c)
+OBJ     = $(patsubst src/%.c,$(BUILDDIR)/%.o,$(SRC))
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(SRC) -o $(TARGET) $(INCLUDE) $(LIBS)
+$(TARGET): $(OBJ)
+	$(CC) $(OBJ) -o $(TARGET) $(LIBS)
+
+$(BUILDDIR)/%.o: src/%.c | $(BUILDDIR)
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(OBJ)
 
 run: $(TARGET)
 	./$(TARGET)

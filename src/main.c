@@ -295,15 +295,15 @@ int main(void) {
     SetTargetFPS(MAX_FPS);
 
     // Load assets
-    Texture2D bg = LoadTexture("media/bg.jpg");
+    Texture2D bg = LoadTexture("assets/bg.jpg");
 
     Texture2D sprites[SPRITE_COUNT];
-    sprites[SPRITE_IDLE]    = LoadTexture("media/sprite_0.png");
-    sprites[SPRITE_THRUST_1]= LoadTexture("media/sprite_1.png");
-    sprites[SPRITE_THRUST_2]= LoadTexture("media/sprite_2.png");
-    sprites[SPRITE_CRASHED] = LoadTexture("media/sprite_3.png");
+    sprites[SPRITE_IDLE]    = LoadTexture("assets/sprite_0.png");
+    sprites[SPRITE_THRUST_1]= LoadTexture("assets/sprite_1.png");
+    sprites[SPRITE_THRUST_2]= LoadTexture("assets/sprite_2.png");
+    sprites[SPRITE_CRASHED] = LoadTexture("assets/sprite_3.png");
 
-    Font font = LoadFontEx("media/font.ttf", 32, 0, 250);
+    Font font = LoadFontEx("assets/font.ttf", 32, 0, 250);
 
     // Game loop
     for (long frame = 0; !WindowShouldClose(); frame++) {
@@ -318,11 +318,6 @@ int main(void) {
 
         // Update game state
         UpdateLander(&lander, dt, input);
-
-        printf("Position: (%.2f, %.2f) Velocity: (%.2f, %.2f) Fuel: %d Status: %d\n", 
-            lander.position.x, lander.position.y, 
-            lander.velocity.x, lander.velocity.y, 
-            lander.fuel, lander.status);
 
         CheckBounds(&lander);
         CheckCollision(&lander);

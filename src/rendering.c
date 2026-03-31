@@ -4,7 +4,26 @@
 
 // ==================== LANDER ==================
 
-void DrawLander(const Lander* l, Texture2D sprite) {
+static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
+    switch (l->status) {
+        case IDLE:
+            return SPRITE_IDLE;
+        case ACTIVE:
+            return (GetTime() * 4) - ((int)(GetTime() * 4)) < 0.5
+                ? SPRITE_THRUST_1
+                : SPRITE_THRUST_2;
+        case TOO_ANGLED:
+        case TOO_FAR:
+        case TOO_FAST:
+            return SPRITE_CRASHED;
+        default:
+            return SPRITE_IDLE;
+    }
+}
+
+void DrawLander(const Lander* l, Texture2D sprites[]) {
+    Texture2D sprite = sprites[GetLanderSpriteIndex(l)];
+
     Rectangle src = {0, 0, sprite.width, sprite.height};
     Rectangle dst = {
         .x = l->position.x,
@@ -15,27 +34,6 @@ void DrawLander(const Lander* l, Texture2D sprite) {
     Vector2 origin = {LANDER_WIDTH / 2, LANDER_HEIGHT / 2};
 
     DrawTexturePro(sprite, src, dst, origin, l->position.z, WHITE);
-}
-
-void DrawLanderSprite(const Lander* l, Texture2D sprites[] ,int frame) {
-    int sprite_idx;
-
-    if (l->status == IDLE) {
-        sprite_idx = SPRITE_IDLE;
-    } 
-    else if (l->status == ACTIVE) {
-        sprite_idx = (frame & (1 << 3)) 
-            ? SPRITE_THRUST_1 
-            : SPRITE_THRUST_2;
-    } 
-    else if (l->status == TOO_ANGLED || l->status == TOO_FAR || l->status == TOO_FAST) {
-        sprite_idx = SPRITE_CRASHED;
-    } 
-    else {
-        sprite_idx = SPRITE_IDLE;
-    }
-
-    DrawLander(l, sprites[sprite_idx]);
 }
 
 // ====================== ENVIRONMENT ======================

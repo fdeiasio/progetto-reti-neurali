@@ -26,7 +26,7 @@ typedef enum {
     SPRITE_COUNT = 4,
 } SpriteIndex;
 
-extern void DrawLanderSprite(const Lander* l, Texture2D sprites[], int frame);
+extern void DrawLander(const Lander* l, Texture2D sprites[]);
 extern void DrawFuelDisplay(Font font, int32_t fuel);
 extern void DrawBackground(Texture2D bg);
 extern void DrawGameOverScreen(Font font, Status s);

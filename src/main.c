@@ -42,7 +42,7 @@ int main(void) {
     Font font = LoadFontEx("assets/font.ttf", 32, 0, 250);
 
     // Game loop
-    for (long frame = 0; !WindowShouldClose(); frame++) {
+    while (!WindowShouldClose()) {
         ActionMask action = GetActionFromKeyboard();
 
         // Reset on game over or win
@@ -58,7 +58,7 @@ int main(void) {
         BeginDrawing();
             DrawBackground(bg);
             DrawFuelDisplay(font, lander.fuel);
-            DrawLanderSprite(&lander, sprites, frame);
+            DrawLander(&lander, sprites);
 
             if (IsGameOver(lander.status))
                 DrawGameOverScreen(font, lander.status);

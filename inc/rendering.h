@@ -11,12 +11,12 @@
 #define WINDOW_WIDTH    MAX_WIDTH
 #define WINDOW_TITLE    "Lunar Lander"
 
-
 #define MAX_FPS         60
-
 
 #define LANDER_HEIGHT   50
 #define LANDER_WIDTH    LANDER_HEIGHT
+
+// =============== ASSETS ==================
 
 typedef enum {
     SPRITE_IDLE = 0,
@@ -26,11 +26,17 @@ typedef enum {
     SPRITE_COUNT = 4,
 } SpriteIndex;
 
-extern void DrawLander(const Lander* l, Texture2D sprites[]);
-extern void DrawFuelDisplay(Font font, int32_t fuel);
-extern void DrawBackground(Texture2D bg);
-extern void DrawGameOverScreen(Font font, Status s);
-extern void DrawWinScreen(Font font);
+typedef struct {
+    Texture2D background;
+    Texture2D sprites[SPRITE_COUNT];
+    Font font;
+} Assets;
 
+extern void LoadAssets(Assets* assets);
+extern void UnloadAssets(Assets* assets);
+
+// =============== RENDERING ==================
+
+extern void RenderScene(Lander* const l, Assets* assets);
 
 #endif //RENDERING_H

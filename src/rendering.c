@@ -2,7 +2,31 @@
 #include "rendering.h"
 #include "core.h"
 
-// ==================== LANDER ==================
+// ==================== ASSETS ===================
+
+void LoadAssets(Assets* assets) {
+    assets->background = LoadTexture("assets/bg.jpg");
+
+    assets->sprites[SPRITE_IDLE]    = LoadTexture("assets/sprite_0.png");
+    assets->sprites[SPRITE_THRUST_1]= LoadTexture("assets/sprite_1.png");
+    assets->sprites[SPRITE_THRUST_2]= LoadTexture("assets/sprite_2.png");
+    assets->sprites[SPRITE_CRASHED] = LoadTexture("assets/sprite_3.png");
+
+    assets->font = LoadFontEx("assets/font.ttf", 32, 0, 250);
+}
+
+void UnloadAssets(Assets* assets) {
+    UnloadTexture(assets->background);
+
+    UnloadTexture(assets->sprites[SPRITE_IDLE]);
+    UnloadTexture(assets->sprites[SPRITE_THRUST_1]);
+    UnloadTexture(assets->sprites[SPRITE_THRUST_2]);
+    UnloadTexture(assets->sprites[SPRITE_CRASHED]);
+
+    UnloadFont(assets->font);
+}
+
+// ==================== RENDERING ==================
 
 static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
     switch (l->status) {
@@ -21,7 +45,7 @@ static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
     }
 }
 
-void DrawLander(const Lander* l, Texture2D sprites[]) {
+static void DrawLander(const Lander* l, Texture2D sprites[]) {
     Texture2D sprite = sprites[GetLanderSpriteIndex(l)];
 
     Rectangle src = {0, 0, sprite.width, sprite.height};
@@ -36,9 +60,7 @@ void DrawLander(const Lander* l, Texture2D sprites[]) {
     DrawTexturePro(sprite, src, dst, origin, l->position.z, WHITE);
 }
 
-// ====================== ENVIRONMENT ======================
-
-void DrawBackground(Texture2D bg) {
+static void DrawBackground(Texture2D bg) {
     Rectangle src = {0, 0, bg.width, bg.height};
     Rectangle dst = {0, 0, GetScreenWidth(), GetScreenHeight()};
 
@@ -62,7 +84,7 @@ static const char* GetGameOverReason(Status s) {
     }
 }
 
-void DrawGameOverScreen(Font font, Status s) {
+static void DrawGameOverScreen(Font font, Status s) {
     const char* title = "Game\nOver";
     Vector2 title_size = MeasureTextEx(font, title, 64, 0);
     Vector2 title_pos = {
@@ -80,7 +102,7 @@ void DrawGameOverScreen(Font font, Status s) {
     DrawTextEx(font, reason, reason_pos, 32, 0, WHITE);
 }
 
-void DrawWinScreen(Font font) {
+static void DrawWinScreen(Font font) {
     const char* title = "Success!";
     Vector2 title_size = MeasureTextEx(font, title, 64, 0);
     Vector2 title_pos = {
@@ -98,8 +120,20 @@ void DrawWinScreen(Font font) {
     DrawTextEx(font, subtitle, subtitle_pos, 32, 0, WHITE);
 }
 
-void DrawFuelDisplay(Font font, int32_t fuel) {
+static void DrawFuelDisplay(Font font, int32_t fuel) {
     char buffer[32];
     snprintf(buffer, sizeof(buffer), "Fuel: %d", fuel);
     DrawTextEx(font, buffer, (Vector2){0, 0}, 32, 0, WHITE);
+}
+
+void RenderScene(const Lander* l, Assets* assets) {
+    DrawBackground(assets->background);
+    DrawFuelDisplay(assets->font, l->fuel);
+    DrawLander(l, assets->sprites);
+
+    if (IsGameOver(l->status))
+        DrawGameOverScreen(assets->font, l->status);
+
+    if (IsSuccess(l->status))
+        DrawWinScreen(assets->font);
 }

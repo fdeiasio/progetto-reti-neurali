@@ -26,20 +26,13 @@ static Lander lander = {
     .status = IDLE,
 };
 
+static Assets assets;
+
 int main(void) {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
     SetTargetFPS(MAX_FPS);
 
-    // Load assets
-    Texture2D bg = LoadTexture("assets/bg.jpg");
-
-    Texture2D sprites[SPRITE_COUNT];
-    sprites[SPRITE_IDLE]    = LoadTexture("assets/sprite_0.png");
-    sprites[SPRITE_THRUST_1]= LoadTexture("assets/sprite_1.png");
-    sprites[SPRITE_THRUST_2]= LoadTexture("assets/sprite_2.png");
-    sprites[SPRITE_CRASHED] = LoadTexture("assets/sprite_3.png");
-
-    Font font = LoadFontEx("assets/font.ttf", 32, 0, 250);
+    LoadAssets(&assets);
 
     // Game loop
     while (!WindowShouldClose()) {
@@ -51,29 +44,14 @@ int main(void) {
             action = 0;
         }
 
-        // Update game state
         UpdateLander(&lander, action);
 
-        // Draw
         BeginDrawing();
-            DrawBackground(bg);
-            DrawFuelDisplay(font, lander.fuel);
-            DrawLander(&lander, sprites);
-
-            if (IsGameOver(lander.status))
-                DrawGameOverScreen(font, lander.status);
-
-            if (IsSuccess(lander.status))
-                DrawWinScreen(font);
+            RenderScene(&lander, &assets);
         EndDrawing();
     }
 
-    // Cleanup
-    UnloadTexture(bg);
-    UnloadTexture(sprites[SPRITE_IDLE]);
-    UnloadTexture(sprites[SPRITE_THRUST_1]);
-    UnloadTexture(sprites[SPRITE_THRUST_2]);
-    UnloadTexture(sprites[SPRITE_CRASHED]);
-    UnloadFont(font);
+    UnloadAssets(&assets);
+
     CloseWindow();
 }

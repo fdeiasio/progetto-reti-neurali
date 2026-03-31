@@ -14,16 +14,13 @@
 #define LANDER_INIT_Z       0
 #define LANDER_INIT_FUEL    800
 
-
 #define DELTA_TIME      0.0167         
 #define GRAVITY         120
 #define THRUST          200
 #define TORQUE          1
 
-
 #define MAX_WIDTH       1920
 #define MAX_HEIGHT      1080
-
 
 #define GROUND_HEIGHT   918
 #define WIN_START       1140

@@ -28,7 +28,7 @@ void UnloadAssets(Assets* assets) {
 
 // ==================== RENDERING ==================
 
-static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
+static SpriteIndex GetLanderSpriteIndex(Lander* const l) {
     switch (l->status) {
         case IDLE:
             return SPRITE_IDLE;
@@ -45,7 +45,7 @@ static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
     }
 }
 
-static void DrawLander(const Lander* l, Texture2D sprites[]) {
+static void DrawLander(Lander* const l, Texture2D sprites[]) {
     Texture2D sprite = sprites[GetLanderSpriteIndex(l)];
 
     Rectangle src = {0, 0, sprite.width, sprite.height};
@@ -126,7 +126,7 @@ static void DrawFuelDisplay(Font font, int32_t fuel) {
     DrawTextEx(font, buffer, (Vector2){0, 0}, 32, 0, WHITE);
 }
 
-void RenderScene(const Lander* l, Assets* assets) {
+void RenderScene(Lander* const l, Assets* assets) {
     DrawBackground(assets->background);
     DrawFuelDisplay(assets->font, l->fuel);
     DrawLander(l, assets->sprites);

@@ -3,7 +3,8 @@ CFLAGS  = -Wall -Wextra -Wpedantic -Werror
 INCLUDE = -I./inc -I./raylib/include
 LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 BUILDDIR = build
-TARGET  = $(BUILDDIR)/main
+BINDIR   = bin
+TARGET  = $(BINDIR)/main
 SRC     = $(wildcard src/*.c)
 OBJ     = $(patsubst src/%.c,$(BUILDDIR)/%.o,$(SRC))
 

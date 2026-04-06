@@ -1,12 +1,8 @@
-#include <stdio.h>
-#include <math.h>
-
 #include "raylib.h"
-#include "raymath.h"
 #include "core.h"
 #include "rendering.h"
 
-static ActionMask GetActionFromKeyboard(void) {
+static ActionMask GetActionFromKeyboard() {
     ActionMask input = 0;
 
     if (IsKeyDown(KEY_LEFT))
@@ -19,20 +15,15 @@ static ActionMask GetActionFromKeyboard(void) {
     return input;
 }
 
-static Lander lander = {
-    .position = {LANDER_INIT_X, LANDER_INIT_Y, LANDER_INIT_Z},
-    .velocity = {0, 0, 0},
-    .fuel = LANDER_INIT_FUEL,
-    .status = IDLE,
-};
-
+static Lander lander;
 static Assets assets;
 
-int main(void) {
+int main() {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
     SetTargetFPS(MAX_FPS);
 
     LoadAssets(&assets);
+    ResetLander(&lander);
 
     // Game loop
     while (!WindowShouldClose()) {

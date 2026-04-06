@@ -4,7 +4,7 @@ INCLUDE = -I./inc -I./raylib/include
 LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 BUILDDIR = build
 BINDIR   = bin
-TARGET  = $(BINDIR)/main
+TARGET  = $(BINDIR)/game
 SRC     = $(wildcard src/*.c)
 OBJ     = $(patsubst src/%.c,$(BUILDDIR)/%.o,$(SRC))
 

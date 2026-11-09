@@ -2,7 +2,7 @@
 #include "core.h"
 #include "rendering.h"
 
-static ActionMask GetActionFromKeyboard() {
+static ActionMask GetActionFromKeyboard(void) {
     ActionMask input = 0;
 
     if (IsKeyDown(KEY_LEFT))
@@ -15,14 +15,16 @@ static ActionMask GetActionFromKeyboard() {
     return input;
 }
 
-static Lander lander;
-static Assets assets;
-
-int main() {
-    InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE);
+int main(void) {
+    InitWindow(WORLD_WIDTH, WORLD_HEIGHT, WINDOW_TITLE);
     SetTargetFPS(MAX_FPS);
 
+    // Load game assets
+    Assets assets;
     LoadAssets(&assets);
+
+    // Instantiate lander
+    Lander lander;
     ResetLander(&lander);
 
     // Game loop
@@ -30,7 +32,7 @@ int main() {
         ActionMask action = GetActionFromKeyboard();
 
         // Reset on game over or win
-        if ((IsGameOver(lander.status) || IsSuccess(lander.status)) && IsKeyPressed(KEY_SPACE)) {
+        if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) {
             ResetLander(&lander);
             action = 0;
         }

@@ -1,18 +1,21 @@
 #include "core.h"
-#include "raymath.h"
 
 // ================== STATUS ======================
 
 bool IsGameOver(Status s) {
-    return s == TOO_FAST      || 
-           s == TOO_ANGLED    || 
-           s == TOO_FAR       || 
-           s == OUT_OF_BOUNDS || 
-           s == OUT_OF_FUEL;
+    return s == STATUS_TOO_FAST      ||
+           s == STATUS_TOO_ANGLED    ||
+           s == STATUS_TOO_FAR       ||
+           s == STATUS_OUT_OF_BOUNDS ||
+           s == STATUS_OUT_OF_FUEL;
 }
 
 bool IsSuccess(Status s) {
-    return s == WON;
+    return s == STATUS_WON;
+}
+
+bool IsFinished(Status s) {
+    return IsGameOver(s) || IsSuccess(s);
 }
 
 // ================== LANDER ======================
@@ -22,14 +25,14 @@ void ResetLander(Lander* l) {
         .position = {LANDER_INIT_X, LANDER_INIT_Y, LANDER_INIT_Z},
         .velocity = {0, 0, 0},
         .fuel = LANDER_INIT_FUEL,
-        .status = IDLE,
+        .status = STATUS_IDLE,
     };
 }
 
-static void ApplyThrust(Lander* const l, Vector3* acceleration) {
-    float angle = l->position.z * DEG2RAD;
-    acceleration->x += THRUST * sinf(angle);
-    acceleration->y -= THRUST * cosf(angle);
+static void ApplyThrust(const Lander* l, Vector3* acceleration) {
+    float radians = l->position.z * DEG2RAD;
+    acceleration->x += THRUST * sinf(radians);
+    acceleration->y -= THRUST * cosf(radians);
 }
 
 static void UpdatePosition(Lander* l, ActionMask action) {
@@ -39,6 +42,10 @@ static void UpdatePosition(Lander* l, ActionMask action) {
         l->position.z -= TORQUE;
     if (action & ACTION_RIGHT)
         l->position.z += TORQUE;
+
+    // Keep the angle in [-180, 180] so a full turn counts as upright
+    l->position.z = remainderf(l->position.z, 360.0f);
+
     if (action & ACTION_THRUST)
         ApplyThrust(l, &acceleration);
 
@@ -51,53 +58,54 @@ static void UpdateFuel(Lander* l, ActionMask action) {
         l->fuel--;
 }
 
-static bool IsLanderOutOfBounds(Lander* const l) {
-    return l->position.x < 0 || l->position.x > MAX_WIDTH ||
-           l->position.y < 0 || l->position.y > MAX_HEIGHT;
+static bool IsLanderOutOfBounds(const Lander* l) {
+    return l->position.x < 0 || l->position.x > WORLD_WIDTH ||
+           l->position.y < 0 || l->position.y > WORLD_HEIGHT;
 }
 
-static bool CheckGroundCollision(Lander* const l) {
+static bool CheckGroundCollision(const Lander* l) {
     return l->position.y > GROUND_HEIGHT;
 }
 
-static Status ApplyGroundCollision(Lander* const l) {
-    l->position.y = GROUND_HEIGHT;
-    l->position.z = 0;
-    
+static Status ApplyGroundCollision(Lander* l) {
     float speed = Vector2Length((Vector2){l->velocity.x, l->velocity.y});
-    
+
+    l->position.y = GROUND_HEIGHT;
+
+    // Check for possible reasons for game over
     if (speed >= VEL_THRESHOLD)
-        return TOO_FAST;
-
+        return STATUS_TOO_FAST;
     if (fabsf(l->position.z) >= ANGLE_THRESHOLD)
-        return TOO_ANGLED;
+        return STATUS_TOO_ANGLED;
+    if (l->position.x <= WIN_START || l->position.x >= WIN_END)
+        return STATUS_TOO_FAR;
 
-    if (l->position.x <= WIN_START && l->position.x >= WIN_END)
-        return TOO_FAR;
-
-    return WON;
+    // If none of it applies, the player must have won
+    return STATUS_WON;
 }
 
 static void UpdateStatus(Lander* l, ActionMask action) {
-    Status newStatus = IDLE;
+    // Each new status check overrides the previous one,
+    // so they are ordered by increasing priority
+    Status newStatus = STATUS_IDLE;
 
     if (action & ACTION_THRUST)
-        newStatus = ACTIVE;
-
-    if (CheckGroundCollision(l)) 
-        newStatus = ApplyGroundCollision(l);
+        newStatus = STATUS_ACTIVE;
 
     if (l->fuel <= 0)
-        newStatus = OUT_OF_FUEL;
+        newStatus = STATUS_OUT_OF_FUEL;
+
+    if (CheckGroundCollision(l))
+        newStatus = ApplyGroundCollision(l);
 
     if (IsLanderOutOfBounds(l))
-        newStatus = OUT_OF_BOUNDS;
+        newStatus = STATUS_OUT_OF_BOUNDS;
 
     l->status = newStatus;
 }
 
 void UpdateLander(Lander* l, ActionMask action) {
-    if (IsGameOver(l->status) || IsSuccess(l->status))
+    if (IsFinished(l->status))
         return;
 
     UpdatePosition(l, action);

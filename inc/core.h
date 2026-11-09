@@ -3,46 +3,26 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "raymath.h"
-
-// ========================== CONFIG =======================
-
-#define LANDER_INIT_X       300
-#define LANDER_INIT_Y       300
-#define LANDER_INIT_Z       0
-#define LANDER_INIT_FUEL    800
-
-#define DELTA_TIME      0.0167         
-#define GRAVITY         120
-#define THRUST          200
-#define TORQUE          1
-
-#define MAX_WIDTH       1920
-#define MAX_HEIGHT      1080
-
-#define GROUND_HEIGHT   918
-#define WIN_START       1140
-#define WIN_END         1285
-#define VEL_THRESHOLD   100
-#define ANGLE_THRESHOLD 15
+#include "config.h"
 
 // ========================== STATUS =======================
 
 typedef enum {
-    IDLE,
-    ACTIVE,
-    TOO_FAST,
-    TOO_ANGLED,
-    TOO_FAR,
-    OUT_OF_BOUNDS,
-    OUT_OF_FUEL,
-    WON,
+    STATUS_IDLE,
+    STATUS_ACTIVE,
+    STATUS_TOO_FAST,
+    STATUS_TOO_ANGLED,
+    STATUS_TOO_FAR,
+    STATUS_OUT_OF_BOUNDS,
+    STATUS_OUT_OF_FUEL,
+    STATUS_WON,
 } Status;
 
-extern bool IsGameOver(Status s);
-extern bool IsSuccess(Status s);
+bool IsGameOver(Status s);
+bool IsSuccess(Status s);
+bool IsFinished(Status s);
 
 // ======================== ACTION =========================
 
@@ -54,14 +34,13 @@ typedef uint8_t ActionMask;
 // ======================== LANDER ==========================
 
 typedef struct {
-    Vector3 position;  
-    Vector3 velocity;  
+    Vector3 position;   // x, y, and z = angle in degrees (0 = upright)
+    Vector3 velocity;   // z is unused (the angle changes only via torque)
     int32_t fuel;
     Status  status;
 } Lander;
 
-extern void ResetLander(Lander* l);
-extern void UpdateLander(Lander* l, ActionMask action);
-
+void ResetLander(Lander* l);
+void UpdateLander(Lander* l, ActionMask action);
 
 #endif //CORE_H

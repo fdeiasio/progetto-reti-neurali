@@ -1,20 +1,8 @@
 #ifndef RENDERING_H
 #define RENDERING_H
 
-#include <stdio.h>
-
+#include "raylib.h"
 #include "core.h"
-
-// ============== CONFIG =======================
-
-#define WINDOW_HEIGHT   MAX_HEIGHT
-#define WINDOW_WIDTH    MAX_WIDTH
-#define WINDOW_TITLE    "Lunar Lander"
-
-#define MAX_FPS         60
-
-#define LANDER_HEIGHT   50
-#define LANDER_WIDTH    LANDER_HEIGHT
 
 // =============== ASSETS ==================
 
@@ -32,11 +20,11 @@ typedef struct {
     Font font;
 } Assets;
 
-extern void LoadAssets(Assets* assets);
-extern void UnloadAssets(Assets* assets);
+void LoadAssets(Assets* assets);
+void UnloadAssets(Assets* assets);
 
 // =============== RENDERING ==================
 
-extern void RenderScene(Lander* const l, Assets* assets);
+void RenderScene(const Lander* l, const Assets* assets);
 
 #endif //RENDERING_H

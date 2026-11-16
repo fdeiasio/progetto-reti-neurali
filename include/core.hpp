@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <random>
 
 #include "config.hpp"
 
@@ -41,7 +42,16 @@ public:
     explicit Lander(float x0, float y0) : x(x0), y(y0) {}
 
     void Update(Input input);
+
+private:
+    void   UpdatePosition(Input input);
+    void   UpdateStatus(Input input);
+    Status Land();
+    bool   IsOutOfBounds() const;
 };
+
+// Lander at a random point inside the start boundary; same seed, same sequence
+Lander RandomLander(std::mt19937& rng);
 
 // ==== CONTROLLER ====
 // Whatever plays the game: the keyboard or the agent

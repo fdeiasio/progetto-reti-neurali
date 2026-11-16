@@ -6,6 +6,16 @@ namespace {
 constexpr float kDegToRad = 3.14159265358979f / 180.0f;
 }
 
+Lander RandomLander(std::mt19937& rng) {
+    const float x = std::uniform_real_distribution<float>{kLanderMinX, kLanderMaxX}(rng);
+    const float y = std::uniform_real_distribution<float>{kLanderMinY, kLanderMaxY}(rng);
+    return Lander{x, y};
+}
+
+bool Lander::IsOutOfBounds() const {
+    return x < 0 || x > kWorldWidth || y < 0;
+}
+
 void Lander::Update(Input input) {
     if (IsFinished(status))
         return;

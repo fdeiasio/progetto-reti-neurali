@@ -11,12 +11,15 @@ public:
     }
 };
 
+static const KeyboardController controller;
+
 }  // namespace
 
 int main() {
     const Renderer renderer;
-    KeyboardController controller;
-    Lander lander;
+
+    std::mt19937 rng{kLanderSeed};
+    Lander lander = RandomLander(rng);
 
     // Game loop
     while (!renderer.ShouldClose()) {
@@ -24,11 +27,12 @@ int main() {
 
         // Reset on game over or win
         if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) {
-            lander = Lander{};
+            lander = RandomLander(rng);
             input  = Input{};
         }
 
         lander.Update(input);
+
         renderer.Draw(lander);
     }
 }

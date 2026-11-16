@@ -14,4 +14,7 @@ run: bin/game
 train:
 	@echo "train: not implemented yet"
 
-.PHONY: all run train
+clean:
+	rm -rf bin
+
+.PHONY: all run train clean

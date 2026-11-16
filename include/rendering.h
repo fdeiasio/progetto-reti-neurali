@@ -2,7 +2,7 @@
 #define RENDERING_H
 
 #include "raylib.h"
-#include "core.h"
+#include "core.hpp"
 
 // =============== ASSETS ==================
 

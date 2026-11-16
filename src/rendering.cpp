@@ -1,16 +1,18 @@
-#include <stdio.h>
+#include <cstdio>
 
 #include "raylib.h"
 #include "rendering.h"
-#include "core.h"
+#include "core.hpp"
+#include "config.h"
 
 // ==================== ASSETS ===================
 
+// Indexed by SpriteIndex
 static const char* const SPRITE_PATHS[SPRITE_COUNT] = {
-    [SPRITE_IDLE]     = "assets/sprite_0.png",
-    [SPRITE_THRUST_1] = "assets/sprite_1.png",
-    [SPRITE_THRUST_2] = "assets/sprite_2.png",
-    [SPRITE_CRASHED]  = "assets/sprite_3.png",
+    "assets/sprite_0.png",
+    "assets/sprite_1.png",
+    "assets/sprite_2.png",
+    "assets/sprite_3.png",
 };
 
 void LoadAssets(Assets* assets) {
@@ -31,18 +33,18 @@ void UnloadAssets(Assets* assets) {
 
 static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
     switch (l->status) {
-        case STATUS_ACTIVE:
+        case Status::Active:
             return (GetTime() * 4) - ((int)(GetTime() * 4)) < 0.5
                 ? SPRITE_THRUST_1
                 : SPRITE_THRUST_2;
-        case STATUS_TOO_ANGLED:
-        case STATUS_TOO_FAR:
-        case STATUS_TOO_FAST:
+        case Status::Too_Angled:
+        case Status::Too_Far:
+        case Status::Too_Fast:
             return SPRITE_CRASHED;
-        case STATUS_IDLE:
-        case STATUS_OUT_OF_FUEL:
-        case STATUS_OUT_OF_BOUNDS:
-        case STATUS_WON:
+        case Status::Idle:
+        case Status::Out_of_Fuel:
+        case Status::Out_of_Bounds:
+        case Status::Won:
             return SPRITE_IDLE;
     }
     return SPRITE_IDLE;
@@ -51,36 +53,36 @@ static SpriteIndex GetLanderSpriteIndex(const Lander* l) {
 static void DrawLander(const Lander* l, const Texture2D sprites[]) {
     Texture2D sprite = sprites[GetLanderSpriteIndex(l)];
 
-    Rectangle src = {0, 0, sprite.width, sprite.height};
+    Rectangle src = {0, 0, (float)sprite.width, (float)sprite.height};
     Rectangle dst = {
-        .x = l->position.x,
-        .y = l->position.y,
+        .x = l->x,
+        .y = l->y,
         .width = LANDER_WIDTH,
         .height = LANDER_HEIGHT,
     };
     Vector2 origin = {LANDER_WIDTH / 2, LANDER_HEIGHT / 2};
 
-    DrawTexturePro(sprite, src, dst, origin, l->position.z, WHITE);
+    DrawTexturePro(sprite, src, dst, origin, l->tetha, WHITE);
 }
 
 static void DrawBackground(Texture2D bg) {
-    Rectangle src = {0, 0, bg.width, bg.height};
-    Rectangle dst = {0, 0, GetScreenWidth(), GetScreenHeight()};
+    Rectangle src = {0, 0, (float)bg.width, (float)bg.height};
+    Rectangle dst = {0, 0, (float)GetScreenWidth(), (float)GetScreenHeight()};
 
-    DrawTexturePro(bg, src, dst, (Vector2){0, 0}, 0.0f, WHITE);
+    DrawTexturePro(bg, src, dst, Vector2{0, 0}, 0.0f, WHITE);
 }
 
 static const char* GetGameOverMessage(Status s) {
     switch (s) {
-        case STATUS_OUT_OF_FUEL:
+        case Status::Out_of_Fuel:
             return "The lander has been impacted by oil shortages";
-        case STATUS_OUT_OF_BOUNDS:
+        case Status::Out_of_Bounds:
             return "The lander had ambitions that exceeded its capabilities";
-        case STATUS_TOO_FAST:
+        case Status::Too_Fast:
             return "The lander met the ground too fast for its own good";
-        case STATUS_TOO_ANGLED:
+        case Status::Too_Angled:
             return "The lander tried to land on its side, it failed";
-        case STATUS_TOO_FAR:
+        case Status::Too_Far:
             return "The lander should calibrate distance better";
         default:
             return "Unknown";
@@ -103,10 +105,10 @@ static void DrawEndScreen(Font font, const char* title, const char* subtitle) {
     DrawTextEx(font, subtitle, subtitle_pos, TEXT_FONT_SIZE, 0, WHITE);
 }
 
-static void DrawFuelDisplay(Font font, int32_t fuel) {
+static void DrawFuelDisplay(Font font, uint32_t fuel) {
     char buffer[32];
-    snprintf(buffer, sizeof(buffer), "Fuel: %d", fuel);
-    DrawTextEx(font, buffer, (Vector2){0, 0}, TEXT_FONT_SIZE, 0, WHITE);
+    snprintf(buffer, sizeof(buffer), "Fuel: %u", fuel);
+    DrawTextEx(font, buffer, Vector2{0, 0}, TEXT_FONT_SIZE, 0, WHITE);
 }
 
 void RenderScene(const Lander* l, const Assets* assets) {

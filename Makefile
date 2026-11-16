@@ -1,39 +1,17 @@
-CC       = gcc
-CFLAGS   = -Wall -Wextra -Wpedantic -Werror -MMD -MP
-INCLUDE  = -I./inc -I./raylib/include
-LIBS     = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
+CXX     = g++
+CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -Werror -I./include -I./raylib/include
+LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 
-BUILDDIR = build
-BINDIR   = bin
+all: bin/game
 
-GAME     = $(BINDIR)/game
-TRAIN    = $(BINDIR)/train
+bin/game: src/game.cpp src/rendering.cpp src/core.cpp
+	mkdir -p bin
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 
-# Simulation code shared by both executables (no rendering)
-CORE_OBJ  = $(BUILDDIR)/core.o
-GAME_OBJ  = $(BUILDDIR)/game.o $(BUILDDIR)/rendering.o $(CORE_OBJ)
-TRAIN_OBJ = $(BUILDDIR)/training.o $(CORE_OBJ)
+run: bin/game
+	./bin/game
 
-all: $(GAME) $(TRAIN)
+train:
+	@echo "train: not implemented yet"
 
-$(GAME): $(GAME_OBJ) | $(BINDIR)
-	$(CC) $^ -o $@ $(LIBS)
-
-$(TRAIN): $(TRAIN_OBJ) | $(BINDIR)
-	$(CC) $^ -o $@ $(LIBS)
-
-$(BUILDDIR)/%.o: src/%.c | $(BUILDDIR)
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
-
-$(BUILDDIR) $(BINDIR):
-	mkdir -p $@
-
-clean:
-	rm -rf $(BUILDDIR) $(BINDIR)
-
-run: $(GAME)
-	./$(GAME)
-
--include $(wildcard $(BUILDDIR)/*.d)
-
-.PHONY: all clean run
+.PHONY: all run train

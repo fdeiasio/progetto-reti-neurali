@@ -1,21 +1,17 @@
 #include "raylib.h"
-#include "core.h"
+#include "core.hpp"
+#include "config.h"
 #include "rendering.h"
 
-static ActionMask GetActionFromKeyboard(void) {
-    ActionMask input = 0;
-
-    if (IsKeyDown(KEY_LEFT))
-        input |= ACTION_LEFT;
-    if (IsKeyDown(KEY_RIGHT))
-        input |= ACTION_RIGHT;
-    if (IsKeyDown(KEY_SPACE))
-        input |= ACTION_THRUST;
-
+static Input GetActionFromKeyboard() {
+    Input input;
+    input.left  = IsKeyDown(KEY_LEFT);
+    input.right = IsKeyDown(KEY_RIGHT);
+    input.space = IsKeyDown(KEY_SPACE);
     return input;
 }
 
-int main(void) {
+int main() {
     InitWindow(WORLD_WIDTH, WORLD_HEIGHT, WINDOW_TITLE);
     SetTargetFPS(MAX_FPS);
 
@@ -24,20 +20,19 @@ int main(void) {
     LoadAssets(&assets);
 
     // Instantiate lander
-    Lander lander;
-    ResetLander(&lander);
+    Lander lander(LANDER_INIT_X, LANDER_INIT_Y);
 
     // Game loop
     while (!WindowShouldClose()) {
-        ActionMask action = GetActionFromKeyboard();
+        Input action = GetActionFromKeyboard();
 
         // Reset on game over or win
         if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) {
-            ResetLander(&lander);
-            action = 0;
+            lander = Lander(LANDER_INIT_X, LANDER_INIT_Y);
+            action = Input{};
         }
 
-        UpdateLander(&lander, action);
+        lander.Update(action);
 
         BeginDrawing();
             RenderScene(&lander, &assets);

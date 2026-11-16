@@ -44,10 +44,10 @@ public:
     void Update(Input input);
 
 private:
-    void   UpdatePosition(Input input);
-    void   UpdateStatus(Input input);
-    Status Land();
-    bool   IsOutOfBounds() const;
+    void UpdatePosition(Input input);
+    void UpdateFuel(Input input);
+    void UpdateStatus(Input input);
+    bool IsOutOfBounds() const;
 };
 
 // Lander at a random point inside the start boundary; same seed, same sequence

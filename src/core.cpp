@@ -21,8 +21,7 @@ void Lander::Update(Input input) {
         return;
 
     UpdatePosition(input);
-    if (input.thrust && fuel > 0)
-        --fuel;
+    UpdateFuel(input);
     UpdateStatus(input);
 }
 
@@ -49,19 +48,9 @@ void Lander::UpdatePosition(Input input) {
     y  += vy * kDeltaTime;
 }
 
-Status Lander::Land() {
-    y = kGroundHeight;
-
-    // Check for possible reasons for game over
-    if (std::hypot(vx, vy) >= kVelThreshold)
-        return Status::Too_Fast;
-    if (std::fabs(theta) >= kAngleThreshold)
-        return Status::Too_Angled;
-    if (x <= kWinStart || x >= kWinEnd)
-        return Status::Too_Far;
-
-    // If none of it applies, the player must have won
-    return Status::Won;
+void Lander::UpdateFuel(Input input) {
+    if (input.thrust && fuel > 0)
+        --fuel;
 }
 
 void Lander::UpdateStatus(Input input) {
@@ -72,8 +61,18 @@ void Lander::UpdateStatus(Input input) {
     if (fuel == 0)
         newStatus = Status::Out_of_Fuel;
 
-    if (y > kGroundHeight)
-        newStatus = Land();
+    // Touchdown: check for possible reasons for game over, else the player won
+    if (y > kGroundHeight) {
+        y = kGroundHeight;
+        if (std::hypot(vx, vy) >= kVelThreshold)
+            newStatus = Status::Too_Fast;
+        else if (std::fabs(theta) >= kAngleThreshold)
+            newStatus = Status::Too_Angled;
+        else if (x <= kWinStart || x >= kWinEnd)
+            newStatus = Status::Too_Far;
+        else
+            newStatus = Status::Won;
+    }
 
     if (IsOutOfBounds())
         newStatus = Status::Out_of_Bounds;

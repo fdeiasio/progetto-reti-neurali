@@ -1,45 +1,34 @@
 #include "raylib.h"
 #include "core.hpp"
-#include "config.h"
-#include "rendering.h"
+#include "rendering.hpp"
 
-static Input GetActionFromKeyboard() {
-    Input input;
-    input.left  = IsKeyDown(KEY_LEFT);
-    input.right = IsKeyDown(KEY_RIGHT);
-    input.space = IsKeyDown(KEY_SPACE);
-    return input;
-}
+namespace {
+
+class KeyboardController : public Controller {
+public:
+    [[nodiscard]] Input GetInput(const Lander&) override {
+        return {IsKeyDown(KEY_LEFT), IsKeyDown(KEY_RIGHT), IsKeyDown(KEY_SPACE)};
+    }
+};
+
+}  // namespace
 
 int main() {
-    InitWindow(WORLD_WIDTH, WORLD_HEIGHT, WINDOW_TITLE);
-    SetTargetFPS(MAX_FPS);
-
-    // Load game assets
-    Assets assets;
-    LoadAssets(&assets);
-
-    // Instantiate lander
-    Lander lander(LANDER_INIT_X, LANDER_INIT_Y);
+    const Renderer renderer;
+    KeyboardController controller;
+    Lander lander;
 
     // Game loop
-    while (!WindowShouldClose()) {
-        Input action = GetActionFromKeyboard();
+    while (!renderer.ShouldClose()) {
+        Input input = controller.GetInput(lander);
 
         // Reset on game over or win
         if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) {
-            lander = Lander(LANDER_INIT_X, LANDER_INIT_Y);
-            action = Input{};
+            lander = Lander{};
+            input  = Input{};
         }
 
-        lander.Update(action);
-
-        BeginDrawing();
-            RenderScene(&lander, &assets);
-        EndDrawing();
+        lander.Update(input);
+        renderer.Draw(lander);
     }
-
-    UnloadAssets(&assets);
-
-    CloseWindow();
 }

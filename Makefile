@@ -1,5 +1,5 @@
 CXX     = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -Werror -I./include -I./raylib/include
+CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic -Werror -I./include -I./raylib/include
 LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 
 all: bin/game

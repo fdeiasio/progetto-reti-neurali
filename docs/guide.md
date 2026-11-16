@@ -4,7 +4,7 @@ The game works (`make run`). What is left is an agent that learns to land:
 a Kohonen network (SOM) turns the continuous state into a discrete state,
 and a Q-matrix picks the action for that state.
 
-1. **Random starts.** Make `ResetLander` start from a random position, angle
+1. **Random starts.** Make a new `Lander` start from a random position, angle
    and speed, so the agent does not learn a single trajectory.
 2. **Actions.** List the possible inputs (nothing, thrust, left, right,
    thrust+left, thrust+right) in a table, so an action is an index.

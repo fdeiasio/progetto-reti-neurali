@@ -1,14 +1,13 @@
 #include "core.hpp"
-#include "config.h"
-#include "agent.h"
+#include "agent.hpp"
 
-#define MAX_EPOCHS 1000
+constexpr int kMaxEpochs = 1000;
 
 int main() {
-    Lander lander(LANDER_INIT_X, LANDER_INIT_Y);
+    [[maybe_unused]] Lander lander;
 
     // Training loop
-    for (int epoch = 0; epoch < MAX_EPOCHS; epoch++) {
+    for (int epoch = 0; epoch < kMaxEpochs; epoch++) {
         // 1. Give the state to the agent and return the input
 
         // 2. Apply reward function for the training

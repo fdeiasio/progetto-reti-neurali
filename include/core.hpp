@@ -58,5 +58,5 @@ Lander RandomLander(std::mt19937& rng);
 class Controller {
 public:
     virtual ~Controller() = default;
-    [[nodiscard]] virtual Input GetInput(const Lander& lander) = 0;
+    [[nodiscard]] virtual Input GetInput(const Lander& lander) const = 0;
 };

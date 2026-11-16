@@ -6,33 +6,32 @@ namespace {
 
 class KeyboardController : public Controller {
 public:
-    [[nodiscard]] Input GetInput(const Lander&) override {
-        return {IsKeyDown(KEY_LEFT), IsKeyDown(KEY_RIGHT), IsKeyDown(KEY_SPACE)};
+    [[nodiscard]] Input GetInput(const Lander&) const override {
+        return { IsKeyDown(KEY_LEFT), IsKeyDown(KEY_RIGHT), IsKeyDown(KEY_SPACE) };
     }
 };
 
-static const KeyboardController controller;
-
 }  // namespace
 
-int main() {
-    const Renderer renderer;
+static const KeyboardController controller;
 
-    std::mt19937 rng{kLanderSeed};
+int main() {
+    const Renderer gameWindow;
+
+    std::mt19937 rng{42};
     Lander lander = RandomLander(rng);
 
     // Game loop
-    while (!renderer.ShouldClose()) {
+    while (!gameWindow.ShouldClose()) {
         Input input = controller.GetInput(lander);
 
         // Reset on game over or win
-        if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) {
+        if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) [[unlikely]] {
             lander = RandomLander(rng);
-            input  = Input{};
+            continue;
         }
 
         lander.Update(input);
-
-        renderer.Draw(lander);
+        gameWindow.Draw(lander);
     }
 }

@@ -17,7 +17,6 @@ inline constexpr float    kLanderMinX      = 200;
 inline constexpr float    kLanderMaxX      = 1720;
 inline constexpr float    kLanderMinY      = 100;
 inline constexpr float    kLanderMaxY      = 400;
-inline constexpr uint32_t kLanderSeed      = 42;
 inline constexpr float    kLanderInitAngle = 0;
 inline constexpr uint32_t kLanderInitFuel  = 800;
 

@@ -105,6 +105,10 @@ Renderer::~Renderer() {
     CloseWindow();
 }
 
+bool Renderer::ShouldClose() const {
+    return WindowShouldClose();
+}
+
 void Renderer::Draw(const Lander& l) const {
     BeginDrawing();
 

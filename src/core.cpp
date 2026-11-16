@@ -3,7 +3,7 @@
 #include "core.hpp"
 
 namespace {
-constexpr float kDegToRad = 3.14159265358979f / 180.0f;
+    constexpr float kDegToRad = 3.14159265358979f / 180.0f;
 }
 
 Lander RandomLander(std::mt19937& rng) {

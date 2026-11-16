@@ -1,9 +1,73 @@
+#include <algorithm>
 #include <cmath>
 
 #include "core.hpp"
 
 namespace {
-    constexpr float kDegToRad = 3.14159265358979f / 180.0f;
+
+constexpr float kDegToRad = 3.14159265358979f / 180.0f;
+
+// ==== PHYSICS ====
+
+void Rotate(Lander& l, Input input) {
+    if (input.left)
+        l.theta -= kTorque;
+    if (input.right)
+        l.theta += kTorque;
+
+    // Keep the angle in [-180, 180] so a full turn counts as upright
+    l.theta = std::remainder(l.theta, 360.0f);
+}
+
+void Move(Lander& l, Input input) {
+    const float thrust  = input.thrust ? kThrust : 0;
+    const float radians = l.theta * kDegToRad;
+    const float ax = thrust * std::sin(radians);
+    const float ay = kGravity - thrust * std::cos(radians);
+
+    l.vx += ax * kDeltaTime;
+    l.vy += ay * kDeltaTime;
+    l.x  += l.vx * kDeltaTime;
+    l.y  += l.vy * kDeltaTime;
+
+    // Rest on the ground instead of sinking into it
+    l.y = std::min(l.y, kGroundHeight);
+}
+
+void UpdateFuel(Lander& l, Input input) {
+    if (input.thrust && l.fuel > 0)
+        --l.fuel;
+}
+
+// ==== STATUS ====
+
+bool IsOutOfBounds(const Lander& l) { return l.x < 0 || l.x > kWorldWidth || l.y < 0; }
+bool HasTouchedDown(const Lander& l) { return l.y >= kGroundHeight; }
+bool IsTooFast(const Lander& l)      { return std::hypot(l.vx, l.vy) >= kVelThreshold; }
+bool IsTooAngled(const Lander& l)    { return std::fabs(l.theta) >= kAngleThreshold; }
+bool IsOnPad(const Lander& l)        { return l.x > kWinStart && l.x < kWinEnd; }
+
+Status TouchdownStatus(const Lander& l) {
+    if (IsTooFast(l))
+        return Status::Too_Fast;
+    if (IsTooAngled(l))
+        return Status::Too_Angled;
+    if (!IsOnPad(l))
+        return Status::Too_Far;
+    return Status::Won;
+}
+
+// Checks run from highest to lowest priority
+Status NextStatus(const Lander& l, Input input) {
+    if (IsOutOfBounds(l))
+        return Status::Out_of_Bounds;
+    if (HasTouchedDown(l))
+        return TouchdownStatus(l);
+    if (l.fuel == 0)
+        return Status::Out_of_Fuel;
+    return input.thrust ? Status::Active : Status::Idle;
+}
+
 }
 
 Lander RandomLander(std::mt19937& rng) {
@@ -12,70 +76,12 @@ Lander RandomLander(std::mt19937& rng) {
     return Lander{x, y};
 }
 
-bool Lander::IsOutOfBounds() const {
-    return x < 0 || x > kWorldWidth || y < 0;
-}
-
 void Lander::Update(Input input) {
     if (IsFinished(status))
         return;
 
-    UpdatePosition(input);
-    UpdateFuel(input);
-    UpdateStatus(input);
-}
-
-void Lander::UpdatePosition(Input input) {
-    if (input.left)
-        theta -= kTorque;
-    if (input.right)
-        theta += kTorque;
-
-    // Keep the angle in [-180, 180] so a full turn counts as upright
-    theta = std::remainder(theta, 360.0f);
-
-    float ax = 0;
-    float ay = kGravity;
-    if (input.thrust) {
-        const float radians = theta * kDegToRad;
-        ax += kThrust * std::sin(radians);
-        ay -= kThrust * std::cos(radians);
-    }
-
-    vx += ax * kDeltaTime;
-    vy += ay * kDeltaTime;
-    x  += vx * kDeltaTime;
-    y  += vy * kDeltaTime;
-}
-
-void Lander::UpdateFuel(Input input) {
-    if (input.thrust && fuel > 0)
-        --fuel;
-}
-
-void Lander::UpdateStatus(Input input) {
-    // Each new status check overrides the previous one,
-    // so they are ordered by increasing priority
-    Status newStatus = input.thrust ? Status::Active : Status::Idle;
-
-    if (fuel == 0)
-        newStatus = Status::Out_of_Fuel;
-
-    // Touchdown: check for possible reasons for game over, else the player won
-    if (y > kGroundHeight) {
-        y = kGroundHeight;
-        if (std::hypot(vx, vy) >= kVelThreshold)
-            newStatus = Status::Too_Fast;
-        else if (std::fabs(theta) >= kAngleThreshold)
-            newStatus = Status::Too_Angled;
-        else if (x <= kWinStart || x >= kWinEnd)
-            newStatus = Status::Too_Far;
-        else
-            newStatus = Status::Won;
-    }
-
-    if (IsOutOfBounds())
-        newStatus = Status::Out_of_Bounds;
-
-    status = newStatus;
+    Rotate(*this, input);
+    Move(*this, input);
+    UpdateFuel(*this, input);
+    status = NextStatus(*this, input);
 }

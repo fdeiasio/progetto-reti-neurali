@@ -42,12 +42,6 @@ public:
     explicit Lander(float x0, float y0) : x(x0), y(y0) {}
 
     void Update(Input input);
-
-private:
-    void UpdatePosition(Input input);
-    void UpdateFuel(Input input);
-    void UpdateStatus(Input input);
-    bool IsOutOfBounds() const;
 };
 
 // Lander at a random point inside the start boundary; same seed, same sequence

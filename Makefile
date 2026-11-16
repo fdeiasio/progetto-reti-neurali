@@ -4,7 +4,7 @@ LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 
 all: bin/game
 
-bin/game: src/game.cpp src/rendering.cpp src/core.cpp
+bin/game: app/game.cpp src/rendering.cpp src/core.cpp
 	mkdir -p bin
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
 

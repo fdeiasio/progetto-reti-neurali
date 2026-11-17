@@ -1,12 +1,12 @@
 CXX     = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic -Werror -I./include -I./raylib/include
+CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -I./include -I./raylib/include
 LIBS    = ./raylib/lib/libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 
 all: bin/game
 
-bin/game: app/game.cpp src/rendering.cpp src/core.cpp
+bin/game: app/game.cpp src/rendering.cpp src/core.cpp $(wildcard include/*.hpp)
 	mkdir -p bin
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LIBS)
+	$(CXX) $(CXXFLAGS) $(filter %.cpp,$^) -o $@ $(LIBS)
 
 run: bin/game
 	./bin/game

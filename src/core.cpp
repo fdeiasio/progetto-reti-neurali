@@ -9,7 +9,7 @@ constexpr float kDegToRad = 3.14159265358979f / 180.0f;
 
 // ==== PHYSICS ====
 
-void Rotate(Lander& l, Input input) {
+void Rotate(Lander& l, GameInput input) {
     if (input.left)
         l.theta -= kTorque;
     if (input.right)
@@ -19,14 +19,20 @@ void Rotate(Lander& l, Input input) {
     l.theta = std::remainder(l.theta, 360.0f);
 }
 
-void Move(Lander& l, Input input) {
-    const float thrust  = input.thrust ? kThrust : 0;
+void Move(Lander& l, GameInput input) {
+    const float thrust  = input.thrust && l.fuel > 0 ? kThrust : 0;
     const float radians = l.theta * kDegToRad;
     const float ax = thrust * std::sin(radians);
     const float ay = kGravity - thrust * std::cos(radians);
 
     l.vx += ax * kDeltaTime;
     l.vy += ay * kDeltaTime;
+
+    if (l.vy >  kMaxSpeed) { l.vy =  kMaxSpeed; }
+    if (l.vy < -kMaxSpeed) { l.vy = -kMaxSpeed; }
+    if (l.vx >  kMaxSpeed) { l.vx =  kMaxSpeed; }
+    if (l.vx < -kMaxSpeed) { l.vx = -kMaxSpeed; }
+    
     l.x  += l.vx * kDeltaTime;
     l.y  += l.vy * kDeltaTime;
 
@@ -34,7 +40,7 @@ void Move(Lander& l, Input input) {
     l.y = std::min(l.y, kGroundHeight);
 }
 
-void UpdateFuel(Lander& l, Input input) {
+void UpdateFuel(Lander& l, GameInput input) {
     if (input.thrust && l.fuel > 0)
         --l.fuel;
 }
@@ -58,14 +64,12 @@ Status TouchdownStatus(const Lander& l) {
 }
 
 // Checks run from highest to lowest priority
-Status NextStatus(const Lander& l, Input input) {
+Status NextStatus(const Lander& l, GameInput input) {
     if (IsOutOfBounds(l))
         return Status::Out_of_Bounds;
     if (HasTouchedDown(l))
         return TouchdownStatus(l);
-    if (l.fuel == 0)
-        return Status::Out_of_Fuel;
-    return input.thrust ? Status::Active : Status::Idle;
+    return input.thrust && l.fuel > 0 ? Status::Active : Status::Idle;
 }
 
 }
@@ -76,7 +80,7 @@ Lander RandomLander(std::mt19937& rng) {
     return Lander{x, y};
 }
 
-void Lander::Update(Input input) {
+void Lander::Update(GameInput input) {
     if (IsFinished(status))
         return;
 

@@ -26,6 +26,7 @@ inline constexpr float kDeltaTime = 0.0167f;
 inline constexpr float kGravity   = 120;
 inline constexpr float kThrust    = 200;
 inline constexpr float kTorque    = 1;
+inline constexpr float kMaxSpeed  = 600;
 
 // ========================== LANDING ======================
 
@@ -42,3 +43,12 @@ inline constexpr float kLanderWidth  = kLanderHeight;
 
 inline constexpr int kTitleFontSize = 64;
 inline constexpr int kTextFontSize  = 32;
+
+// ========================== SOM ===========================
+
+inline constexpr int   kSomDim   = 30;  // grid side: kSomDim * kSomDim neurons
+
+inline constexpr float kSomAlphaStart  = 0.5f;
+inline constexpr float kSomAlphaMin    = 0.01f;
+inline constexpr float kSomRadiusMin   = 0.5f;
+inline constexpr float kSomDecaySteps  = 100000;  // steps for alpha and radius to shrink by e

@@ -23,7 +23,6 @@ Renderer::Sprite GetLanderSprite(Status s) {
         case Status::Too_Fast:
             return Renderer::kSpriteCrashed;
         case Status::Idle:
-        case Status::Out_of_Fuel:
         case Status::Out_of_Bounds:
         case Status::Won:
             return Renderer::kSpriteIdle;
@@ -33,8 +32,6 @@ Renderer::Sprite GetLanderSprite(Status s) {
 
 constexpr const char* GetGameOverMessage(Status s) {
     switch (s) {
-        case Status::Out_of_Fuel:
-            return "The lander has been impacted by oil shortages";
         case Status::Out_of_Bounds:
             return "The lander had ambitions that exceeded its capabilities";
         case Status::Too_Fast:
@@ -93,7 +90,7 @@ Renderer::Renderer() {
     background_ = LoadTexture("assets/bg.jpg");
     for (std::size_t i = 0; i < kSpriteCount; ++i)
         sprites_[i] = LoadTexture(kSpritePaths[i]);
-    font_ = LoadFontEx("assets/font.ttf", kTextFontSize, nullptr, 250);
+    font_ = LoadFontEx("assets/font.ttf", kTitleFontSize, nullptr, 250);
 }
 
 Renderer::~Renderer() {

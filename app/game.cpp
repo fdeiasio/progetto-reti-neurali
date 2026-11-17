@@ -6,7 +6,7 @@ namespace {
 
 class KeyboardController : public Controller {
 public:
-    [[nodiscard]] Input GetInput(const Lander&) const override {
+    [[nodiscard]] GameInput GetInput(const Lander&) const override {
         return { IsKeyDown(KEY_LEFT), IsKeyDown(KEY_RIGHT), IsKeyDown(KEY_SPACE) };
     }
 };
@@ -22,7 +22,7 @@ int main() {
     Lander lander = RandomLander(rng);
 
     while (!gameWindow.ShouldClose()) {
-        Input input = controller.GetInput(lander);
+        GameInput input = controller.GetInput(lander);
 
         if (IsFinished(lander.status) && IsKeyPressed(KEY_SPACE)) [[unlikely]] {
             lander = RandomLander(rng);

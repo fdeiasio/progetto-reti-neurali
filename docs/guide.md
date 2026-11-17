@@ -4,8 +4,8 @@ The game works (`make run`). What is left is an agent that learns to land:
 a Kohonen network (SOM) turns the continuous state into a discrete state,
 and a Q-matrix picks the action for that state.
 
-1. **Random starts.** Make a new `Lander` start from a random position, angle
-   and speed, so the agent does not learn a single trajectory.
+1. **Random starts.** A new `Lander` starts from a random position
+   (`RandomLander`), so the agent does not learn a single trajectory.
 2. **Actions.** List the possible inputs (nothing, thrust, left, right,
    thrust+left, thrust+right) in a table, so an action is an index.
 3. **State vector.** Turn a `Lander` into a few normalised numbers
@@ -21,7 +21,7 @@ and a Q-matrix picks the action for that state.
 6. **Reward.** Big positive reward for landing in the zone, big negative for
    crashing or leaving the screen, small shaping terms (closer to the zone,
    slower, more upright) in between.
-7. **Training loop** (`src/training.cpp`, `make train`). Run many episodes:
+7. **Training loop** (`app/train.cpp`, `make train`). Run many episodes:
    reset, step the physics with the agent's action, learn, until the
    episode ends. Decay epsilon. Print the success rate every N episodes.
 8. **Save and load.** Write the SOM weights and the Q-matrix to a file, so
@@ -32,4 +32,5 @@ and a Q-matrix picks the action for that state.
     the success rate is good; write down what you tried for the exam.
 
 When step 7 exists, replace the `train` stub in the Makefile with a real
-target that builds `src/training.cpp` with `src/core.cpp` (no raylib window).
+target that builds `app/train.cpp` with `src/core.cpp` and `src/som.cpp`
+(no raylib window).
